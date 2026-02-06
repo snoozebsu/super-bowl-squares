@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140">
+  <defs>
+    <linearGradient id="shield-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#013369"/>
+      <stop offset="100%" style="stop-color:#D50A0A"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#shield-grad)" d="M60 5 L110 25 L110 75 Q110 120 60 135 Q10 120 10 75 L10 25 Z"/>
+  <path fill="#fff" d="M60 25 L95 40 L95 70 Q95 100 60 115 Q25 100 25 70 L25 40 Z"/>
+  <text x="60" y="75" text-anchor="middle" fill="#013369" font-size="28" font-weight="bold" font-family="Arial">NFL</text>
+</svg>
