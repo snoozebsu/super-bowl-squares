@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getTakenSquaresCount } from "@/lib/game";
-import { checkVerification, normalizePhone } from "@/lib/twilio";
 
 export const runtime = "nodejs";
 
@@ -12,7 +11,7 @@ export async function POST(
   try {
     const { code } = await params;
     const body = await request.json();
-    const { name, squaresToBuy, phone, otpCode, email } = body;
+    const { name, squaresToBuy, email } = body;
 
     if (!name || squaresToBuy == null) {
       return NextResponse.json(
@@ -21,28 +20,14 @@ export async function POST(
       );
     }
 
-    // If phone provided, OTP must be verified first
-    let normalizedPhone: string | null = null;
-    if (phone) {
-      if (!otpCode) {
-        return NextResponse.json(
-          { error: "Verification code required when using phone" },
-          { status: 400 }
-        );
-      }
-      const verifyResult = await checkVerification(phone, String(otpCode));
-      if (!verifyResult.success) {
-        return NextResponse.json(
-          { error: verifyResult.error || "Invalid or expired code" },
-          { status: 400 }
-        );
-      }
-      normalizedPhone = normalizePhone(phone);
+    if (!email || typeof email !== "string" || !email.trim().includes("@")) {
+      return NextResponse.json(
+        { error: "Valid email is required" },
+        { status: 400 }
+      );
     }
 
-    const normalizedEmail = email && String(email).trim().includes("@")
-      ? String(email).trim().toLowerCase()
-      : null;
+    const normalizedEmail = String(email).trim().toLowerCase();
 
     const quantity = parseInt(String(squaresToBuy), 10);
     if (quantity < 1 || quantity > 100) {
@@ -82,10 +67,10 @@ export async function POST(
     }
 
     const insertUser = db.prepare(`
-      INSERT INTO users (name, game_id, is_admin, squares_to_buy, phone, email)
-      VALUES (?, ?, 0, ?, ?, ?)
+      INSERT INTO users (name, game_id, is_admin, squares_to_buy, email)
+      VALUES (?, ?, 0, ?, ?)
     `);
-    const result = insertUser.run(String(name), game.id, quantity, normalizedPhone, normalizedEmail);
+    const result = insertUser.run(String(name), game.id, quantity, normalizedEmail);
     const userId = (result as { lastInsertRowid: number }).lastInsertRowid;
 
     return NextResponse.json({

@@ -50,11 +50,7 @@ export default function GamePage() {
   const [numbersAssigned, setNumbersAssigned] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginMethod, setLoginMethod] = useState<"phone" | "email">("phone");
-  const [loginPhone, setLoginPhone] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginOtp, setLoginOtp] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -98,58 +94,6 @@ export default function GamePage() {
     }
     refresh().catch(() => setError("Failed to load game")).finally(() => setLoading(false));
   }, [code, refresh]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loginPhone.trim() || !loginOtp.trim()) return;
-    setLoginLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/games/${code}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: loginPhone.trim(), otpCode: loginOtp.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
-
-      const newSession: Session = {
-        userId: data.userId,
-        gameId: data.gameId,
-        isAdmin: data.isAdmin,
-        name: data.name,
-        squaresToBuy: data.squaresToBuy,
-      };
-      localStorage.setItem(`game-${code}`, JSON.stringify(newSession));
-      setSession(newSession);
-      setShowLogin(false);
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const handleSendLoginOtp = async () => {
-    if (!loginPhone.trim()) return;
-    setLoginLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/auth/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: loginPhone.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send code");
-      setShowLogin(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send code");
-    } finally {
-      setLoginLoading(false);
-    }
-  };
 
   const handleSendMagicLink = async () => {
     if (!loginEmail.trim()) return;
@@ -220,7 +164,7 @@ export default function GamePage() {
             Log back in
           </h2>
           <p className="text-slate-300 text-sm text-center">
-            Enter the phone or email you used when joining.
+            Enter the email you used when joining or creating the game.
           </p>
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-2 rounded-xl text-sm">
@@ -243,100 +187,24 @@ export default function GamePage() {
                 Use different email
               </button>
             </div>
-          ) : !showLogin ? (
-            <div className="space-y-4">
-              <div className="flex gap-2 mb-2">
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod("phone")}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    loginMethod === "phone"
-                      ? "bg-[#69BE28] text-white"
-                      : "bg-white/10 text-slate-300 hover:bg-white/20"
-                  }`}
-                >
-                  Phone
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod("email")}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    loginMethod === "email"
-                      ? "bg-[#69BE28] text-white"
-                      : "bg-white/10 text-slate-300 hover:bg-white/20"
-                  }`}
-                >
-                  Email
-                </button>
-              </div>
-              {loginMethod === "phone" ? (
-                <>
-                  <input
-                    type="tel"
-                    value={loginPhone}
-                    onChange={(e) => setLoginPhone(e.target.value)}
-                    placeholder="555-123-4567"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-white/20 bg-white/5 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#69BE28] focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendLoginOtp}
-                    disabled={loginLoading || !loginPhone.trim()}
-                    className="w-full py-4 bg-[#69BE28] text-white font-bold rounded-xl hover:bg-[#5aa823] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {loginLoading ? "Sending..." : "Send code"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <input
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-white/20 bg-white/5 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#69BE28] focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendMagicLink}
-                    disabled={loginLoading || !loginEmail.trim()}
-                    className="w-full py-4 bg-[#69BE28] text-white font-bold rounded-xl hover:bg-[#5aa823] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {loginLoading ? "Sending..." : "Send magic link"}
-                  </button>
-                </>
-              )}
-            </div>
           ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <p className="text-slate-200 text-sm text-center">
-                Enter the 6-digit code sent to {loginPhone}
-              </p>
+            <div className="space-y-4">
               <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={loginOtp}
-                onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
-                className="w-full px-4 py-3 rounded-xl border-2 border-white/20 bg-white/5 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#69BE28] focus:border-transparent text-center text-2xl tracking-widest"
-                autoFocus
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 rounded-xl border-2 border-white/20 bg-white/5 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#69BE28] focus:border-transparent"
               />
               <button
-                type="submit"
-                disabled={loginLoading || loginOtp.length < 6}
+                type="button"
+                onClick={handleSendMagicLink}
+                disabled={loginLoading || !loginEmail.trim()}
                 className="w-full py-4 bg-[#69BE28] text-white font-bold rounded-xl hover:bg-[#5aa823] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loginLoading ? "Verifying..." : "Log in"}
+                {loginLoading ? "Sending..." : "Send magic link"}
               </button>
-              <button
-                type="button"
-                onClick={() => { setShowLogin(false); setLoginOtp(""); setError(""); }}
-                className="w-full text-slate-400 text-sm hover:text-white"
-              >
-                Use different number
-              </button>
-            </form>
+            </div>
           )}
           <Link
             href={`/join/${code}`}

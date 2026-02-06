@@ -14,19 +14,15 @@ A mobile-optimized web app for playing Super Bowl squares with friends.
 
 ```bash
 npm install
-cp .env.example .env   # Optional: for phone auth (login recovery)
+cp .env.example .env
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### Login Recovery (Optional)
+### Email Authentication (Required)
 
-**Phone (Twilio):** Set up [Twilio Verify](https://www.twilio.com/docs/verify) — add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`. Trial accounts need verified numbers.
-
-**Email (Resend):** Set up [Resend](https://resend.com) — add `RESEND_API_KEY`. Free tier: 100 emails/day. Use `onboarding@resend.dev` for testing, or verify a domain for production. Set `NEXT_PUBLIC_APP_URL` (e.g. your Railway URL) so magic links work.
-
-Without these configured, players can still join and play; they just won't have login recovery.
+Email is required for joining and creating games. Set up [Resend](https://resend.com) — add `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. Free tier: 100 emails/day. Use `onboarding@resend.dev` for testing, or verify a domain for production. Set `NEXT_PUBLIC_APP_URL` (e.g. your Railway URL) so magic links work for login recovery.
 
 ## Scripts
 

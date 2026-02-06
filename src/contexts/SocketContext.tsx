@@ -9,7 +9,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const s = io({ path: "/api/socket" });
+    const s = io({
+      path: "/api/socket",
+      secure: typeof window !== "undefined" && window.location.protocol === "https:",
+    });
     setSocket(s);
     return () => {
       s.disconnect();
