@@ -13,6 +13,7 @@ interface GameInfo {
     name: string;
     squares_to_buy: number;
     selectedCount: number;
+    picksSubmitted?: boolean;
   }>;
 }
 
@@ -98,6 +99,7 @@ export default function AdminPanel({
                 .map((u) => (
                   <li key={u.name} className="text-slate-700">
                     {u.name}: {u.selectedCount}/{u.squares_to_buy} selected
+                    {u.picksSubmitted ? " ✓" : ""}
                   </li>
                 ))}
             </ul>

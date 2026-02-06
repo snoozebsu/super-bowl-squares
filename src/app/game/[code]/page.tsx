@@ -22,6 +22,13 @@ type GameInfo = {
   numbers_assigned: number;
   row_numbers: string | null;
   col_numbers: string | null;
+  users?: Array<{
+    id: number;
+    name: string;
+    squares_to_buy: number;
+    selectedCount: number;
+    picksSubmitted?: boolean;
+  }>;
 };
 
 type Session = {
@@ -50,6 +57,7 @@ export default function GamePage() {
   const [loginOtp, setLoginOtp] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchSquares = useCallback(async () => {
     if (!code) return;
@@ -346,13 +354,36 @@ export default function GamePage() {
   const selectedCount =
     Object.values(grid).filter((s) => s.userId === session.userId).length;
   const squaresToBuy = session.squaresToBuy ?? 0;
+  const currentUser = gameInfo.users?.find((u) => u.id === session.userId);
+  const picksSubmitted = currentUser?.picksSubmitted ?? false;
   const canSelect =
     gameInfo.status === "pending" &&
     !session.isAdmin &&
+    !picksSubmitted &&
     selectedCount < squaresToBuy;
 
+  const handleSubmitPicks = async () => {
+    if (!session || !code || picksSubmitted || selectedCount !== squaresToBuy) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/games/${code}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: session.userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit");
+      await fetchGameInfo();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit picks");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 p-4 pb-8 max-w-2xl mx-auto">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-2 sm:px-4 pb-8 max-w-2xl mx-auto">
       <header className="mb-4">
         <h1
           className="text-2xl font-bold text-slate-900"
@@ -388,9 +419,36 @@ export default function GamePage() {
       )}
 
       {!session.isAdmin && gameInfo.status === "pending" && (
-        <p className="my-2 text-sm text-center font-medium text-slate-700">
-          Selected {selectedCount} of {squaresToBuy} squares
-        </p>
+        <div className="my-2 space-y-2">
+          {picksSubmitted ? (
+            <p className="text-sm text-center font-medium text-emerald-700 bg-emerald-50 py-2 px-4 rounded-lg">
+              Picks submitted ✓
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-center font-medium text-slate-700">
+                Selected {selectedCount} of {squaresToBuy} squares
+              </p>
+              {selectedCount === squaresToBuy && (
+                <button
+                  type="button"
+                  onClick={handleSubmitPicks}
+                  disabled={submitting}
+                  className="w-full py-3 bg-[#69BE28] hover:bg-[#5aa823] text-white font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                >
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Submitting...
+                    </span>
+                  ) : (
+                    "Submit Picks"
+                  )}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {error && (
@@ -399,7 +457,7 @@ export default function GamePage() {
         </div>
       )}
 
-      <div className="mt-4">
+      <div className="mt-6">
         <Grid
           grid={grid}
           rowNumbers={rowNumbers}

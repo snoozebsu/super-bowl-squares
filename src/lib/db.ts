@@ -86,6 +86,16 @@ function initSchema(database: Database.Database) {
     // Column may already exist
   }
 
+  // Migration: add picks_submitted for locking in selections
+  try {
+    const info = database.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+    if (!info.some((c) => c.name === "picks_submitted")) {
+      database.exec("ALTER TABLE users ADD COLUMN picks_submitted INTEGER NOT NULL DEFAULT 0");
+    }
+  } catch {
+    // Column may already exist
+  }
+
   database.exec(`
     CREATE TABLE IF NOT EXISTS magic_tokens (
       token TEXT PRIMARY KEY,

@@ -39,59 +39,58 @@ export default function SquareCell({
   const isAvailable = !userId;
   const isTakenByOther = userId && !isCurrentUser;
 
-  let bgColor = "bg-white border-slate-200";
+  let cellStyle = "bg-slate-50 border-slate-200";
   if (isCurrentUser) {
-    bgColor = "bg-[#69BE28] text-white border-[#002244]";
+    cellStyle = "bg-[#69BE28] text-white border-[#5aa823]";
   } else if (isTakenByOther) {
-    bgColor = "bg-slate-200 text-slate-700 border-slate-300";
+    cellStyle = "bg-slate-100 text-slate-500 border-slate-200";
   } else if (canSelect) {
-    bgColor = "bg-slate-50 hover:bg-emerald-50 border-emerald-200 hover:border-emerald-400";
+    cellStyle =
+      "bg-white border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 active:bg-emerald-100";
   }
 
   const canInteract = (canSelect && isAvailable) || isCurrentUser;
-
-  const handleClick = () => {
-    if (canInteract) {
-      onSelect();
-    }
-  };
 
   return (
     <div className="relative group">
       <motion.button
         type="button"
-        onClick={handleClick}
+        onClick={canInteract ? onSelect : undefined}
         disabled={!canInteract}
         title={isTakenByOther && userName ? userName : undefined}
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: index * 0.008, duration: 0.2 }}
-        whileTap={canInteract ? { scale: 0.92 } : undefined}
-        whileHover={canInteract ? { scale: 1.03 } : undefined}
+        transition={{ delay: index * 0.005, duration: 0.15 }}
+        whileTap={canInteract ? { scale: 0.94 } : undefined}
         className={`
-          min-w-[32px] min-h-[32px] sm:min-w-[40px] sm:min-h-[40px]
-          w-8 h-8 sm:w-10 sm:h-10
-          border-2 rounded-lg flex flex-col items-center justify-center
-          text-xs font-semibold touch-manipulation select-none
-          shadow-sm transition-shadow
-          ${bgColor}
-          ${canInteract ? "cursor-pointer hover:shadow-md" : "cursor-default"}
+          w-full aspect-square
+          rounded-lg border
+          flex flex-col items-center justify-center
+          text-[9px] sm:text-[11px] font-semibold leading-tight
+          touch-manipulation select-none
+          transition-colors duration-100
+          ${cellStyle}
+          ${canInteract ? "cursor-pointer active:shadow-inner" : "cursor-default"}
           ${isTakenByOther ? "cursor-help" : ""}
         `}
       >
         {numbersAssigned && rowNumber !== undefined && colNumber !== undefined ? (
-          <span className="text-[10px] sm:text-xs opacity-90">
-            {rowNumber}×{colNumber}
+          <span className="opacity-80 leading-none">
+            {rowNumber}&times;{colNumber}
           </span>
         ) : null}
-        <span className="truncate max-w-full px-0.5 font-medium">
-          {userName ? getInitials(userName) : ""}
-        </span>
+        {userName ? (
+          <span className="truncate max-w-full px-px leading-none mt-px">
+            {getInitials(userName)}
+          </span>
+        ) : null}
       </motion.button>
+
+      {/* Tooltip on hover (desktop) */}
       {isTakenByOther && userName && (
-        <div className="absolute z-10 px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded shadow-lg whitespace-nowrap -top-9 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute z-20 px-2 py-1 text-[11px] font-medium text-white bg-slate-800 rounded-md shadow-lg whitespace-nowrap -top-8 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
           {userName}
-          <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-slate-800" />
+          <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800" />
         </div>
       )}
     </div>

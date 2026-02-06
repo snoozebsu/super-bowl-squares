@@ -41,13 +41,14 @@ export async function GET(
 
     const users = db
       .prepare(
-        "SELECT id, name, is_admin, squares_to_buy FROM users WHERE game_id = ?"
+        "SELECT id, name, is_admin, squares_to_buy, COALESCE(picks_submitted, 0) as picks_submitted FROM users WHERE game_id = ?"
       )
       .all(game.id) as Array<{
       id: number;
       name: string;
       is_admin: number;
       squares_to_buy: number;
+      picks_submitted: number;
     }>;
 
     const userSelections = db
@@ -67,6 +68,7 @@ export async function GET(
       users: users.map((u) => ({
         ...u,
         selectedCount: selectionMap[u.id] ?? 0,
+        picksSubmitted: u.picks_submitted === 1,
       })),
     });
   } catch (error) {

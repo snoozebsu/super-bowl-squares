@@ -22,10 +22,12 @@ export function useGameSocket(
 
     socket.on("square-updated", handleUpdate);
     socket.on("game-started", handleUpdate);
+    socket.on("picks-submitted", handleUpdate);
 
     return () => {
       socket.off("square-updated", handleUpdate);
       socket.off("game-started", handleUpdate);
+      socket.off("picks-submitted", handleUpdate);
     };
   }, [socket, gameCode]);
 }

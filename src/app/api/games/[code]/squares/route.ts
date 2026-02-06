@@ -102,11 +102,18 @@ export async function POST(
     }
 
     const user = db
-      .prepare("SELECT squares_to_buy FROM users WHERE id = ? AND game_id = ?")
-      .get(userId, game.id) as { squares_to_buy: number } | undefined;
+      .prepare("SELECT squares_to_buy, picks_submitted FROM users WHERE id = ? AND game_id = ?")
+      .get(userId, game.id) as { squares_to_buy: number; picks_submitted?: number } | undefined;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (user.picks_submitted) {
+      return NextResponse.json(
+        { error: "Picks are locked. You cannot change your selection." },
+        { status: 400 }
+      );
     }
 
     const currentSquare = db

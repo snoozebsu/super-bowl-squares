@@ -12,13 +12,8 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.015, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.01, delayChildren: 0.02 },
   },
-};
-
-const cellVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1 },
 };
 
 interface GridProps {
@@ -81,70 +76,112 @@ export default function Grid({
     [getSquare, currentUserId, selectedCount, squaresToBuy, canSelect, onSelectSquare]
   );
 
-  const headerCellClass = "min-w-[28px] min-h-[28px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center text-xs font-bold text-gray-600";
-
   return (
     <motion.div
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="overflow-x-auto -mx-2 px-2"
+      className="w-full mx-auto"
     >
-      <motion.div
-        variants={containerVariants}
-        className="inline-grid gap-0.5 sm:gap-1"
-        style={{ gridTemplateColumns: "auto repeat(10, minmax(28px, 1fr))" }}
-      >
-        <div className="flex items-center justify-center pr-2 min-w-[100px] sm:min-w-[120px]">
-          <div className="flex items-center gap-3">
-            <TeamLogo team="seahawks" size="xl" animate={false} />
-            <p className="text-lg font-bold text-slate-800 -rotate-90 origin-center whitespace-nowrap">
-              {ROW_TEAM}
-            </p>
+      <div className="bg-white rounded-2xl shadow-lg ring-1 ring-slate-200/80 p-2 sm:p-3">
+
+        {/* Seahawks across the top — logo + name centered */}
+        <div className="flex items-center justify-center gap-2.5 pb-2">
+          <TeamLogo team="seahawks" size="md" animate={false} />
+          <span
+            className="text-xl sm:text-2xl font-extrabold text-[#002244] uppercase tracking-wide"
+            style={{ fontFamily: "var(--font-bebas), system-ui, sans-serif" }}
+          >
+            {ROW_TEAM}
+          </span>
+        </div>
+
+        {/* Main layout: Patriots label on left + column headers & grid */}
+        <div className="flex">
+
+          {/* Patriots vertical label + logo */}
+          <div className="flex flex-col items-center justify-center w-7 sm:w-9 shrink-0 mr-0.5 gap-1.5">
+            <TeamLogo team="patriots" size="sm" animate={false} />
+            <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+              <span
+                className="text-xl sm:text-2xl font-extrabold text-[#002244] uppercase tracking-wide"
+                style={{ fontFamily: "var(--font-bebas), system-ui, sans-serif" }}
+              >
+                {COL_TEAM}
+              </span>
+            </div>
+          </div>
+
+          {/* Column headers + Row headers + Grid */}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div
+              className="grid w-full min-w-0"
+              style={{
+                gridTemplateColumns: "minmax(0, auto) repeat(10, minmax(0, 1fr))",
+                gap: "2px",
+              }}
+            >
+              {/* Top-left corner: empty */}
+              <div />
+
+              {/* Column number headers — Seahawks themed */}
+              {Array.from({ length: 10 }, (_, i) => (
+                <div
+                  key={`col-${i}`}
+                  className="flex items-center justify-center aspect-[1.4] rounded-md text-[11px] sm:text-xs font-bold tabular-nums"
+                  style={{
+                    backgroundColor: numbersAssigned ? "#002244" : "#e2e8f0",
+                    color: numbersAssigned ? "#69BE28" : "#94a3b8",
+                    border: numbersAssigned ? "2px solid #69BE28" : "1px solid #cbd5e1",
+                  }}
+                >
+                  {numbersAssigned ? i : ""}
+                </div>
+              ))}
+
+              {/* Data rows: row header + 10 cells each */}
+              {Array.from({ length: 10 }, (_, displayRow) => (
+                <div key={displayRow} className="contents">
+                  {/* Row number header — Patriots themed */}
+                  <div
+                    className="flex items-center justify-center aspect-[0.7] rounded-md text-[11px] sm:text-xs font-bold tabular-nums"
+                    style={{
+                      backgroundColor: numbersAssigned ? "#C60C30" : "#e2e8f0",
+                      color: numbersAssigned ? "#ffffff" : "#94a3b8",
+                      border: numbersAssigned ? "2px solid #002244" : "1px solid #cbd5e1",
+                    }}
+                  >
+                    {numbersAssigned ? displayRow : ""}
+                  </div>
+
+                  {/* Cells */}
+                  {Array.from({ length: 10 }, (_, displayCol) => {
+                    const physicalRow = displayRows[displayRow];
+                    const physicalCol = displayCols[displayCol];
+                    const sq = getSquare(physicalRow, physicalCol);
+                    return (
+                      <SquareCell
+                        key={displayCol}
+                        row={physicalRow}
+                        col={physicalCol}
+                        userId={sq.userId}
+                        userName={sq.userName}
+                        isCurrentUser={sq.userId === currentUserId}
+                        rowNumber={numbersAssigned ? displayRow : undefined}
+                        colNumber={numbersAssigned ? displayCol : undefined}
+                        numbersAssigned={numbersAssigned}
+                        canSelect={canSelect}
+                        onSelect={() => handleSquareClick(physicalRow, physicalCol)}
+                        index={displayRow * 10 + displayCol}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="col-span-10 flex flex-col items-center justify-center pb-2">
-          <TeamLogo team="patriots" size="xl" animate />
-          <p className="text-lg font-bold text-slate-800 mt-1">{COL_TEAM}</p>
-        </div>
-        {numbersAssigned
-              ? Array.from({ length: 10 }, (_, i) => (
-                  <motion.div key={i} variants={cellVariants} className={headerCellClass}>
-                    {i}
-                  </motion.div>
-                ))
-              : Array.from({ length: 10 }, (_, i) => (
-                  <div key={i} className="min-w-[28px] min-h-[28px] sm:min-w-[36px] sm:min-h-[36px]" />
-                ))}
-        {Array.from({ length: 10 }, (_, displayRow) => (
-          <div key={displayRow} className="contents">
-            <motion.div variants={cellVariants} className={`${headerCellClass} min-w-[24px]`}>
-              {numbersAssigned ? displayRow : ""}
-            </motion.div>
-            {Array.from({ length: 10 }, (_, displayCol) => {
-              const physicalRow = displayRows[displayRow];
-              const physicalCol = displayCols[displayCol];
-              const sq = getSquare(physicalRow, physicalCol);
-              return (
-                <SquareCell
-                  key={displayCol}
-                  row={physicalRow}
-                  col={physicalCol}
-                  userId={sq.userId}
-                  userName={sq.userName}
-                  isCurrentUser={sq.userId === currentUserId}
-                  rowNumber={numbersAssigned ? displayRow : undefined}
-                  colNumber={numbersAssigned ? displayCol : undefined}
-                  numbersAssigned={numbersAssigned}
-                  canSelect={canSelect}
-                  onSelect={() => handleSquareClick(physicalRow, physicalCol)}
-                  index={displayRow * 10 + displayCol}
-                />
-              );
-            })}
-          </div>
-        ))}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
