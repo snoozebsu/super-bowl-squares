@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getTakenSquaresCount } from "@/lib/game";
+import { checkVerification, normalizePhone } from "@/lib/twilio";
 
 export const runtime = "nodejs";
 
@@ -11,7 +12,7 @@ export async function POST(
   try {
     const { code } = await params;
     const body = await request.json();
-    const { name, squaresToBuy } = body;
+    const { name, squaresToBuy, phone, otpCode, email } = body;
 
     if (!name || squaresToBuy == null) {
       return NextResponse.json(
@@ -19,6 +20,29 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    // If phone provided, OTP must be verified first
+    let normalizedPhone: string | null = null;
+    if (phone) {
+      if (!otpCode) {
+        return NextResponse.json(
+          { error: "Verification code required when using phone" },
+          { status: 400 }
+        );
+      }
+      const verifyResult = await checkVerification(phone, String(otpCode));
+      if (!verifyResult.success) {
+        return NextResponse.json(
+          { error: verifyResult.error || "Invalid or expired code" },
+          { status: 400 }
+        );
+      }
+      normalizedPhone = normalizePhone(phone);
+    }
+
+    const normalizedEmail = email && String(email).trim().includes("@")
+      ? String(email).trim().toLowerCase()
+      : null;
 
     const quantity = parseInt(String(squaresToBuy), 10);
     if (quantity < 1 || quantity > 100) {
@@ -58,10 +82,10 @@ export async function POST(
     }
 
     const insertUser = db.prepare(`
-      INSERT INTO users (name, game_id, is_admin, squares_to_buy)
-      VALUES (?, ?, 0, ?)
+      INSERT INTO users (name, game_id, is_admin, squares_to_buy, phone, email)
+      VALUES (?, ?, 0, ?, ?, ?)
     `);
-    const result = insertUser.run(String(name), game.id, quantity);
+    const result = insertUser.run(String(name), game.id, quantity, normalizedPhone, normalizedEmail);
     const userId = (result as { lastInsertRowid: number }).lastInsertRowid;
 
     return NextResponse.json({

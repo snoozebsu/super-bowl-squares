@@ -63,6 +63,40 @@ function initSchema(database: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_squares_game ON squares(game_id);
     CREATE INDEX IF NOT EXISTS idx_users_game ON users(game_id);
   `);
+
+  // Migration: add phone column for login recovery
+  try {
+    const info = database.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+    if (!info.some((c) => c.name === "phone")) {
+      database.exec("ALTER TABLE users ADD COLUMN phone TEXT");
+      database.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_game_phone ON users(game_id, phone) WHERE phone IS NOT NULL");
+    }
+  } catch {
+    // Column may already exist
+  }
+
+  // Migration: add email column and magic_tokens table
+  try {
+    const info = database.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+    if (!info.some((c) => c.name === "email")) {
+      database.exec("ALTER TABLE users ADD COLUMN email TEXT");
+      database.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_game_email ON users(game_id, email) WHERE email IS NOT NULL");
+    }
+  } catch {
+    // Column may already exist
+  }
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS magic_tokens (
+      token TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      game_id INTEGER NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (game_id) REFERENCES games(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_magic_tokens_expires ON magic_tokens(expires_at);
+  `);
 }
 
 export function createGameSquares(gameId: number) {
