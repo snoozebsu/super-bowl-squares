@@ -135,7 +135,7 @@ export default function Grid({
                     border: numbersAssigned ? "2px solid #69BE28" : "1px solid #cbd5e1",
                   }}
                 >
-                  {numbersAssigned ? i : ""}
+                  {numbersAssigned && colNumbers ? colNumbers[i] : ""}
                 </div>
               ))}
 
@@ -151,7 +151,7 @@ export default function Grid({
                       border: numbersAssigned ? "2px solid #002244" : "1px solid #cbd5e1",
                     }}
                   >
-                    {numbersAssigned ? displayRow : ""}
+                    {numbersAssigned && rowNumbers ? rowNumbers[displayRows[displayRow]] : ""}
                   </div>
 
                   {/* Cells */}
