@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SquareCell from "./SquareCell";
 import TeamLogo from "./TeamLogo";
@@ -46,21 +46,9 @@ export default function Grid({
     [grid]
   );
 
-  const { displayRows, displayCols } = useMemo(() => {
-    if (!rowNumbers || !colNumbers || !numbersAssigned) {
-      return {
-        displayRows: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        displayCols: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-      };
-    }
-    const invertedRow: number[] = new Array(10);
-    const invertedCol: number[] = new Array(10);
-    for (let n = 0; n < 10; n++) {
-      invertedRow[n] = rowNumbers.indexOf(n);
-      invertedCol[n] = colNumbers.indexOf(n);
-    }
-    return { displayRows: invertedRow, displayCols: invertedCol };
-  }, [rowNumbers, colNumbers, numbersAssigned]);
+  // No reordering - cells stay in physical position, headers show randomized digits
+  const displayRows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const displayCols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   const handleSquareClick = useCallback(
     (physicalRow: number, physicalCol: number) => {
@@ -135,7 +123,7 @@ export default function Grid({
                     border: numbersAssigned ? "2px solid #69BE28" : "1px solid #cbd5e1",
                   }}
                 >
-                  {numbersAssigned && colNumbers ? colNumbers[displayCols[i]] : ""}
+                  {numbersAssigned && colNumbers ? colNumbers[i] : ""}
                 </div>
               ))}
 
@@ -151,7 +139,7 @@ export default function Grid({
                       border: numbersAssigned ? "2px solid #002244" : "1px solid #cbd5e1",
                     }}
                   >
-                    {numbersAssigned && rowNumbers ? rowNumbers[displayRows[displayRow]] : ""}
+                    {numbersAssigned && rowNumbers ? rowNumbers[displayRow] : ""}
                   </div>
 
                   {/* Cells */}
